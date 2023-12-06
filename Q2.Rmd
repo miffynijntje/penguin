@@ -1,0 +1,169 @@
+---
+title: "Q2.1"
+output:
+  pdf_document: default
+  html_document: default
+date: "2023-12-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Introduction
+
+Firstly, I inspected the Palmers penguin data set, and saved a copy of the raw data so I can preserve it and not write over it. Then, I cleaned the data by removing rows, cleaning column names and removing empty values, and created a function for this for future efficiency. Penguins use their flippers to swim through water, so I thought it might be worth exploring whether flippers get longer as penguins get larger to help them swim easier. Therefore, I made an exploratory scatter plot to see how body mass and flipper length relate to each other, colour coding the points by species. This plot showed a possible positive correlation, which I used to form a hypothesis. 
+
+```{r Data Exploration}
+
+# Make sure your code prints. 
+
+
+#Load libraries
+library(ggplot2)
+library(janitor)
+library(dplyr)
+library(tidyverse)
+library(palmerpenguins)
+
+
+#View raw data
+raw_data <- penguins_raw
+head(raw_data)
+names(raw_data)
+
+#Save copy of raw data
+
+# Define the folder name
+raw_data_folder <- "your_raw_data_folder"
+
+# Create the folder (if it doesn't exist)
+if (!dir.exists(raw_data_folder)) {
+  dir.create(raw_data_folder)
+}
+
+# Write the CSV file to the specified folder
+write.csv(penguins_raw, file.path(raw_data_folder, "penguins_raw.csv"))
+
+
+#Clean data by removing rows, cleaning column names and removing empty values
+clean_data <- raw_data %>%
+   select(-Comments) %>%
+    select(-starts_with("Delta")) %>%
+    clean_names() %>% 
+    remove_empty()
+
+#View names of columns in clean data
+names(clean_data)
+
+#Create function for data cleaning
+data_cleaning <- function(data){data %>%
+    select(-Comments) %>%
+    select(-starts_with("Delta")) %>%
+    clean_names() %>% 
+    remove_empty() }
+
+#Test function works 
+penguin_clean_test <- data_cleaning(raw_data)
+names(penguin_clean_test)
+
+#specify folders and function 
+
+functions_folder <- "my_functions"
+data_cleaning <- function(data){data %>%
+    select(-Comments) %>%
+    select(-starts_with("Delta")) %>%
+    clean_names() %>% 
+    remove_empty()
+}
+#Save function 
+
+functions_folder <- "functions_folder"
+
+dir.create(functions_folder)
+
+save(data_cleaning, file = paste0(functions_folder, "/function.R"))
+
+
+#Save a copy of cleaned data
+
+clean_data_folder <- "clean_data_folder"
+
+dir.create(clean_data_folder)
+
+dir_path <- "clean_data_folder"
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path)
+}
+
+write.csv(clean_data, file.path(dir_path, "clean_data.csv"))
+
+# Create an exploratory scatter plot
+
+clean_data %>%
+  ggplot(aes(x=body_mass_g, y=flipper_length_mm, color=factor(species))) + geom_point() + labs(title = "Exploratory Scatter Plot of Body Mass and Flipper Length", x="Body Mass (g)", y="Flipper Length(mm)", color="Species")
+
+# Save as png
+
+png("bodymass_flipper_plot.png", width=1000, height=800)
+
+clean_data %>%
+  ggplot(aes(x=body_mass_g, y=flipper_length_mm, color=factor(species))) + geom_point() + labs(title = "Exploratory Scatter Plot of Body Mass and Flipper Length", x="Body Mass (g)", y="Flipper Length(mm)", color="Species") + theme(text = element_text(size = 20))
+
+dev.off()
+
+
+```
+
+### Hypothesis
+
+As the penguins get larger, their flippers will get longer. I hypothesise that as body mass increases, the flipper length will also increase.
+
+### Statistical Methods
+I decided to use Pearson's correlation coefficient to conduct a one tailed hypothesis test.
+
+The null hypothesis is that there is no correlation between body mass and flipper length. H0: Correlation = 0.
+
+The alternative hypothesis is that there is a positive correlation between body mass and flipper length. HA: Correlation >0. 
+
+If the p value is lower than 0.05, we can reject the null hypothesis. 
+
+```{r Statistics}
+
+# Make sure your code prints. 
+
+#Run a Pearson correlation hypothesis test
+cor_test <- cor.test(clean_data$body_mass_g, clean_data$flipper_length_mm, method="pearson", alternative = "greater")
+print(cor_test)
+```
+### Results & Discussion
+
+P value is very small (< 2.2e-16), suggesting that we can reject the null hypothesis. The correlation coefficient is 0.8712018, suggesting a strong positive relationship between body mass and flipper length. I will make a results figure, which will be a scatter plot with a regression line to display this information.
+
+```{r Plotting Results}
+
+# Make sure your code prints. 
+
+#Create another scatter plot with the regression line
+
+clean_data %>%
+ggplot(aes(x=body_mass_g, y=flipper_length_mm, color=factor(species))) + geom_point() + geom_smooth(method = "lm", se = FALSE, color = "black") + labs(title="Scatter Plot of Body Mass and Flipper Length with Regression Line", subtitle = "r=0.8712018 p=<2.2e-16", color= "Species", x="Body Mass(g)", y="Flipper Length(mm)")
+
+
+#Save results figure as a png
+
+png("results.png", width=1000, height=800)
+
+clean_data %>%
+ggplot(aes(x=body_mass_g, y=flipper_length_mm, color=factor(species))) + geom_point() + geom_smooth(method = "lm", se = FALSE, color = "black") + labs(title="Scatter Plot of Body Mass and Flipper Length with Regression Line", subtitle = "r=0.8712018 p=<2.2e-16", color= "Species", x="Body Mass(g)", y="Flipper Length(mm)")
+
+dev.off()
+
+
+
+```
+### Conclusion
+
+In conclusion, from running a Pearson correlation coefficient hypothesis test, we can say that it's likely that there is a positive correlation between penguin body mass and flipper length. This test cannot confirm that larger body mass will cause longer flippers, but can say that it is statistically likely that there is a relationship between them. This test did not consider differences between species, which could change the correlation coefficient and p value, altering the conclusion. From looking at the graph, we can maybe assume the correlations between body mass and flipper length when differentiated by species will also be positive, but this would require more tests to be sure. 
+
+------------------------------------------------------------------------
